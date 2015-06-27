@@ -1,3 +1,4 @@
+//See copyright notice in LICENSE
 #pragma once
 
 #include "coolwindows.h"
