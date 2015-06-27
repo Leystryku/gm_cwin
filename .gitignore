@@ -1,0 +1,10 @@
+build/debug/gm_cwin_win32.exp
+build/debug/gm_cwin_win32.lib
+build/debug/gm_cwin_win32.pdb
+build/release/gm_cwin_win32.lib
+*.tlog
+project/obj/Release/vc120.pdb
+*.obj
+project/obj/Debug/coolwindows.log
+*.opensdf
+build/release/gm_cwin_win32.exp
