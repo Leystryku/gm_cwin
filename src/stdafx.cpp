@@ -1,5 +1,5 @@
 // stdafx.cpp : source file that includes just the standard includes
-// Nikyuria.pch will be the pre-compiled header
+// gm_cwin.pch will be the pre-compiled header
 // stdafx.obj will contain the pre-compiled type information
 
 #include "stdafx.h"
