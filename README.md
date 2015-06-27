@@ -2,7 +2,8 @@
 A module which allows interfering with windows in gmod.
 CWIN.FindWindow/FindWindowEx are there for finding the windows to send input to.
 CWIN.DoWinInput sends the window specified a message.
-CWIN.GetWindowRender allows taking screenshots of windows and pushing them to gmod so that you can e.g. use them in a HUDPaint hook -  not done
+CWIN.GetWindowRender allows taking screenshots of windows and pushing them to gmod so that you can e.g. use them in a HUDPaint hoo
+CWIN.GetWindowRenderToFile allows taking screenshots and saving them to a file ( gmoddir/coolwindows.png ).
 
 Drag & Drop the dll to garrysmod/lua/bin/ change the name gmcl_cwin_win32.dll or gmsv_cwin_win32.dll  and you're set.
 
