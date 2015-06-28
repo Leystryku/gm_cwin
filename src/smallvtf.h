@@ -606,4 +606,332 @@ struct TextureSettingsEx_t
 
 #pragma pack()
 
+class IAppSystem
+{
+public:
+	// Here's where the app systems get to learn about each other 
+	virtual bool Connect() = 0;
+	virtual void Disconnect() = 0;
+
+	// Here's where systems can access other interfaces implemented by this object
+	// Returns NULL if it doesn't implement the requested interface
+	virtual void *QueryInterface(const char *pInterfaceName) = 0;
+
+	// Init, shutdown
+	virtual void* Init() = 0;
+	virtual void Shutdown() = 0;
+};
+typedef void* (*CreateInterfaceFn)(const char *pName, int *pReturnCode);
+
+class IMaterialSystem 
+{
+public:
+
+	// Placeholder for API revision
+	virtual bool Connect() = 0;
+	virtual void Disconnect() = 0;
+	virtual void *QueryInterface(const char *pInterfaceName) = 0;
+	virtual void* Init() = 0;
+	virtual void Shutdown() = 0;
+
+	//---------------------------------------------------------
+	// Initialization and shutdown
+	//---------------------------------------------------------
+
+	// Call this to initialize the material system
+	// returns a method to create interfaces in the shader dll
+	virtual void	Init(void*a) = 0;
+
+	// Call this to set an explicit shader version to use 
+	// Must be called before Init().
+	virtual void				SetShaderAPI(char const *pShaderAPIDLL) = 0;
+
+	// Must be called before Init(), if you're going to call it at all...
+	virtual void				SetAdapter(int nAdapter, int nFlags) = 0;
+
+	// Call this when the mod has been set up, which may occur after init
+	// At this point, the game + gamebin paths have been set up
+	virtual void				ModInit() = 0;
+	virtual void				ModShutdown() = 0;
+
+	//---------------------------------------------------------
+	//
+	//---------------------------------------------------------
+	virtual void					SetThreadMode(int mode, int nServiceThread = -1) = 0;
+	virtual int	GetThreadMode() = 0;
+	virtual bool					IsRenderThreadSafe() = 0;
+	virtual void					ExecuteQueued() = 0;
+
+	//---------------------------------------------------------
+	// Config management
+	//---------------------------------------------------------
+
+	virtual int *GetHardwareConfig(const char *pVersion, int *returnCode) = 0;
+
+
+	// Call this before rendering each frame with the current config
+	// for the material system.
+	// Will do whatever is necessary to get the material system into the correct state
+	// upon configuration change. .doesn't much else otherwise.
+	virtual bool				UpdateConfig(bool bForceUpdate) = 0;
+
+	// Force this to be the config; update all material system convars to match the state
+	// return true if lightmaps need to be redownloaded
+	virtual bool				OverrideConfig(const int &config, bool bForceUpdate) = 0;
+
+	// Get the current config for this video card (as last set by UpdateConfig)
+	virtual const int &GetCurrentConfigForVideoCard() const = 0;
+
+	// Gets *recommended* configuration information associated with the display card, 
+	// given a particular dx level to run under. 
+	// Use dxlevel 0 to use the recommended dx level.
+	// The function returns false if an invalid dxlevel was specified
+
+	// UNDONE: To find out all convars affected by configuration, we'll need to change
+	// the dxsupport.pl program to output all column headers into a single keyvalue block
+	// and then we would read that in, and send it back to the client
+	virtual bool				GetRecommendedConfigurationInfo(int nDXLevel, int * pKeyValues) = 0;
+
+
+	// -----------------------------------------------------------
+	// Device methods
+	// -----------------------------------------------------------
+
+	// Gets the number of adapters...
+	virtual int					GetDisplayAdapterCount() const = 0;
+
+	// Returns the current adapter in use
+	virtual int					GetCurrentAdapter() const = 0;
+
+	// Returns info about each adapter
+	virtual void				GetDisplayAdapterInfo(int adapter, int& info) const = 0;
+
+	// Returns the number of modes
+	virtual int					GetModeCount(int adapter) const = 0;
+
+	// Returns mode information..
+	virtual void				GetModeInfo(int adapter, int mode, int& info) const = 0;
+
+	virtual void				AddModeChangeCallBack(int func) = 0;
+
+	// Returns the mode info for the current display device
+	virtual void				GetDisplayMode(int& mode) const = 0;
+
+	// Sets the mode...
+	virtual bool				SetMode(void* hwnd, const int &config) = 0;
+
+	virtual bool				SupportsMSAAMode(int nMSAAMode) = 0;
+
+	// FIXME: REMOVE! Get video card identitier
+	virtual const int &GetVideoCardIdentifier(void) const = 0;
+
+	// Use this to spew information about the 3D layer 
+	virtual void				SpewDriverInfo() const = 0;
+
+	virtual void				GetDXLevelDefaults(int &max_dxlevel, int &recommended_dxlevel) = 0;
+
+	// Get the image format of the back buffer. . useful when creating render targets, etc.
+	virtual void				GetBackBufferDimensions(int &width, int &height) const = 0;
+	virtual int			GetBackBufferFormat() const = 0;
+
+	virtual bool				SupportsHDRMode(int nHDRModede) = 0;
+
+
+	// -----------------------------------------------------------
+	// Window methods
+	// -----------------------------------------------------------
+
+	// Creates/ destroys a child window
+	virtual bool				AddView(void* hwnd) = 0;
+	virtual void				RemoveView(void* hwnd) = 0;
+
+	// Sets the view
+	virtual void				SetView(void* hwnd) = 0;
+
+
+	// -----------------------------------------------------------
+	// Control flow
+	// -----------------------------------------------------------
+
+	virtual void				BeginFrame(float frameTime) = 0;
+	virtual void				EndFrame() = 0;
+	virtual void				Flush(bool flushHardware = false) = 0;
+
+	/// FIXME: This stuff needs to be cleaned up and abstracted.
+	// Stuff that gets exported to the launcher through the engine
+	virtual void				SwapBuffers() = 0;
+
+	// Flushes managed textures from the texture cacher
+	virtual void				EvictManagedResources() = 0;
+
+	virtual void				ReleaseResources(void) = 0;
+	virtual void				ReacquireResources(void) = 0;
+
+
+	// -----------------------------------------------------------
+	// Device loss/restore
+	// -----------------------------------------------------------
+
+	// Installs a function to be called when we need to release vertex buffers + textures
+	virtual void				AddReleaseFunc(int func) = 0;
+	virtual void				RemoveReleaseFunc(int func) = 0;
+
+	// Installs a function to be called when we need to restore vertex buffers
+	virtual void				AddRestoreFunc(int func) = 0;
+	virtual void				RemoveRestoreFunc(int func) = 0;
+
+	// Release temporary HW memory...
+	virtual void				ResetTempHWMemory(bool bExitingLevel = false) = 0;
+
+	// For dealing with device lost in cases where SwapBuffers isn't called all the time (Hammer)
+	virtual void				HandleDeviceLost() = 0;
+
+
+	// -----------------------------------------------------------
+	// Shaders
+	// -----------------------------------------------------------
+
+	// Used to iterate over all shaders for editing purposes
+	// GetShaders returns the number of shaders it actually found
+	virtual int					ShaderCount() const = 0;
+	virtual int					GetShaders(int nFirstShader, int nMaxCount, int **ppShaderList) const = 0;
+
+	// FIXME: Is there a better way of doing this?
+	// Returns shader flag names for editors to be able to edit them
+	virtual int					ShaderFlagCount() const = 0;
+	virtual const char *		ShaderFlagName(int nIndex) const = 0;
+
+	// Gets the actual shader fallback for a particular shader
+	virtual void				GetShaderFallback(const char *pShaderName, char *pFallbackShader, int nFallbackLength) = 0;
+
+
+	// -----------------------------------------------------------
+	// Material proxies
+	// -----------------------------------------------------------
+
+	virtual int *GetMaterialProxyFactory() = 0;
+
+	// Sets the material proxy factory. Calling this causes all materials to be uncached.
+	virtual void				SetMaterialProxyFactory(int* pFactory) = 0;
+
+
+	// -----------------------------------------------------------
+	// Editor mode
+	// -----------------------------------------------------------
+
+	// Used to enable editor materials. Must be called before Init.
+	virtual void				EnableEditorMaterials() = 0;
+
+
+	// -----------------------------------------------------------
+	// Stub mode mode
+	// -----------------------------------------------------------
+
+	// Force it to ignore Draw calls.
+	virtual void				SetInStubMode(bool bInStubMode) = 0;
+
+
+	//---------------------------------------------------------
+	// Debug support
+	//---------------------------------------------------------
+
+	virtual void				DebugPrintUsedMaterials(const char *pSearchSubString, bool bVerbose) = 0;
+	virtual void				DebugPrintUsedTextures(void) = 0;
+
+	virtual void				ToggleSuppressMaterial(char const* pMaterialName) = 0;
+	virtual void				ToggleDebugMaterial(char const* pMaterialName) = 0;
+
+
+	//---------------------------------------------------------
+	// Misc features
+	//---------------------------------------------------------
+	//returns whether fast clipping is being used or not - needed to be exposed for better per-object clip behavior
+	virtual bool				UsingFastClipping(void) = 0;
+
+	virtual int					StencilBufferBits(void) = 0; //number of bits per pixel in the stencil buffer
+
+
+	//---------------------------------------------------------
+	// Material and texture management
+	//---------------------------------------------------------
+
+	// uncache all materials. .  good for forcing reload of materials.
+	virtual void				UncacheAllMaterials() = 0;
+
+	// Remove any materials from memory that aren't in use as determined
+	// by the IMaterial's reference count.
+	virtual void				UncacheUnusedMaterials(bool bRecomputeStateSnapshots = false) = 0;
+
+	// Load any materials into memory that are to be used as determined
+	// by the IMaterial's reference count.
+	virtual void				CacheUsedMaterials() = 0;
+
+	// Force all textures to be reloaded from disk.
+	virtual void				ReloadTextures() = 0;
+
+	// Reloads materials
+	virtual void				ReloadMaterials(const char *pSubString = 0) = 0;
+
+	// Create a procedural material. The keyvalues looks like a VMT file
+	virtual int *			CreateMaterial(const char *pMaterialName, int *pVMTKeyValues) = 0;
+
+	// Find a material by name.
+	// The name of a material is a full path to 
+	// the vmt file starting from "hl2/materials" (or equivalent) without
+	// a file extension.
+	// eg. "dev/dev_bumptest" refers to somethign similar to:
+	// "d:/hl2/hl2/materials/dev/dev_bumptest.vmt"
+	//
+	// Most of the texture groups for pTextureGroupName are listed in texture_group_names.h.
+	// 
+	// Note: if the material can't be found, this returns a checkerboard material. You can 
+	// find out if you have that material by calling IMaterial::IsErrorMaterial().
+	// (Or use the global IsErrorMaterial function, which checks if it's null too).
+	virtual int *			FindMaterial(char const* pMaterialName, const char *pTextureGroupName, bool complain = true, const char *pComplainPrefix = 0) = 0;
+
+	// Query whether a material is loaded (eg, whether FindMaterial will be nonblocking)
+	virtual bool				IsMaterialLoaded(char const* pMaterialName) = 0;
+
+	//---------------------------------
+	// This is the interface for knowing what materials are available
+	// is to use the following functions to get a list of materials.  The
+	// material names will have the full path to the material, and that is the 
+	// only way that the directory structure of the materials will be seen through this
+	// interface.
+	// NOTE:  This is mostly for worldcraft to get a list of materials to put
+	// in the "texture" browser.in Worldcraft
+	virtual int	FirstMaterial() const = 0;
+
+	// returns InvalidMaterial if there isn't another material.
+	// WARNING: you must call GetNextMaterial until it returns NULL, 
+	// otherwise there will be a memory leak.
+	virtual int	NextMaterial(int h) const = 0;
+
+	// This is the invalid material
+	virtual int	InvalidMaterial() const = 0;
+
+	// Returns a particular material
+	virtual int*			GetMaterial(int h) const = 0;
+
+	// Get the total number of materials in the system.  These aren't just the used
+	// materials, but the complete collection.
+	virtual int					GetNumMaterials() const = 0;
+
+	//---------------------------------
+
+	virtual void				SetAsyncTextureLoadCache(void* hFileCache) = 0;
+
+	virtual int *			FindTexture(char const* pTextureName, const char *pTextureGroupName, bool complain = true, int nAdditionalCreationFlags = 0) = 0;
+
+	// Checks to see if a particular texture is loaded
+	virtual bool				IsTextureLoaded(char const* pTextureName) const = 0;
+
+	// Creates a procedural texture
+	virtual ITexture *			CreateProceduralTexture(const char	*pTextureName,
+		const char *pTextureGroupName,
+		int w,
+		int h,
+		ImageFormat fmt,
+		int nFlags) = 0;
+};
 #endif // VTF_H

@@ -43,14 +43,14 @@
     <LinkIncremental>false</LinkIncremental>
     <OutDir>..\build\debug\</OutDir>
     <IntDir>obj\Debug\</IntDir>
-    <TargetName>gm_cwin_win32</TargetName>
+    <TargetName>gmcl_cwin_win32</TargetName>
     <TargetExt>.dll</TargetExt>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
     <OutDir>..\build\release\</OutDir>
     <IntDir>obj\Release\</IntDir>
-    <TargetName>gm_cwin_win32</TargetName>
+    <TargetName>gmcl_cwin_win32</TargetName>
     <TargetExt>.dll</TargetExt>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
@@ -110,8 +110,12 @@
     <ClInclude Include="..\src\Lua\Types.h" />
     <ClInclude Include="..\src\Lua\UserData.h" />
     <ClInclude Include="..\src\coolwindows.h" />
+    <ClInclude Include="..\src\ismallpixelwriter.h" />
+    <ClInclude Include="..\src\ismalltexture.h" />
+    <ClInclude Include="..\src\smallvtf.h" />
     <ClInclude Include="..\src\stdafx.h" />
     <ClInclude Include="..\src\targetver.h" />
+    <ClInclude Include="..\src\wmlist.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\src\coolwindows.cpp" />

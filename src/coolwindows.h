@@ -10,6 +10,8 @@
 #include "ismallpixelwriter.h"
 #include "smallvtf.h"
 
+IMaterialSystem*matsys = 0;
+
 struct Rect_t
 {
 	int x, y;

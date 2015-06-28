@@ -21,7 +21,7 @@ int lua_DoWinInput(lua_State* state)
 			lparam = MAKELPARAM(LUA->GetNumber(4), LUA->GetNumber(5));
 		}
 	}
-	
+
 	LUA->PushBool(PostMessageA((HWND)LUA->GetUserdata(1), (WPARAM)LUA->GetNumber(2), (UINT)LUA->GetNumber(3), lparam));
 	return 1;
 }
@@ -41,7 +41,7 @@ int lua_FindWindow(lua_State* state)
 
 	const char*cl = LUA->GetString(1);
 	const char*win = LUA->GetString(2);
-	
+
 	if (cl && strlen(cl) == 0)
 		cl = 0;
 
@@ -109,7 +109,7 @@ public:
 void CProceduralRegenerator::RegenerateTextureBits(ITexture *pTexture, IVTFTexture *pVTFTexture, Rect_t *pSubRect)
 {
 	//create
-	
+
 	if (!window)
 		return;
 
@@ -127,7 +127,7 @@ void CProceduralRegenerator::RegenerateTextureBits(ITexture *pTexture, IVTFTextu
 
 	int width = rect.right - rect.left;
 	int height = rect.bottom - rect.top;
-	
+
 
 	BITMAPINFO livebmpinfo;
 	livebmpinfo.bmiHeader.biSize = sizeof(livebmpinfo.bmiHeader);
@@ -146,15 +146,15 @@ void CProceduralRegenerator::RegenerateTextureBits(ITexture *pTexture, IVTFTextu
 
 
 	SelectObject(memhdc, hbmp);
-	BitBlt(memhdc, 0, 0, width, height, hdc, 0, 0, SRCCOPY);
+	BitBlt(memhdc, 0, 0, width, height, hdc, 0, 0, SRCCOPY | CAPTUREBLT);
 
 	if (!imagebits)
 	{
 		return;
 	}
-	
+
 	CPixelWriter pixelWriter;
-	pixelWriter.SetPixelMemory(pVTFTexture->Format(), pVTFTexture->ImageData(0,0,0), pVTFTexture->RowSizeInBytes(0));
+	pixelWriter.SetPixelMemory(pVTFTexture->Format(), pVTFTexture->ImageData(0, 0, 0), pVTFTexture->RowSizeInBytes(0));
 
 	int xmax = pSubRect->x + pSubRect->width;
 	int ymax = pSubRect->y + pSubRect->height;
@@ -166,20 +166,20 @@ void CProceduralRegenerator::RegenerateTextureBits(ITexture *pTexture, IVTFTextu
 		for (x = pSubRect->x; x < xmax; ++x)
 		{
 
-			int num = (x + y)*4;
+			int num = (x + y) * 4;
 			int r = (int)imagebits[num];
 			int g = (int)imagebits[num + 1];
 			int b = (int)imagebits[num + 2];
 			int a = (int)imagebits[num + 3];
 
-			if (x==5&&y==5)
-				pixelWriter.WritePixel(255,0,0,255);
+			if (x == 5 && y == 5)
+				pixelWriter.WritePixel(255, 0, 0, 255);
 			else
-				pixelWriter.WritePixel(r,g,b,a);
+				pixelWriter.WritePixel(r, g, b, a);
 
 		}
 	}
-	
+
 	DeleteObject(hbmp);
 	ReleaseDC(HWND_DESKTOP, hdc);
 	ReleaseDC(NULL, memhdc);
@@ -190,7 +190,7 @@ void CProceduralRegenerator::RegenerateTextureBits(ITexture *pTexture, IVTFTextu
 
 void CProceduralRegenerator::Release()
 {
-	
+
 }
 
 
@@ -386,7 +386,7 @@ int lua_GetWindowRenderToFile(lua_State *state)
 		width, height);
 
 	SelectObject(memhdc, hbmp);
-	BitBlt(memhdc, 0, 0, width, height, hdc, 0, 0, SRCCOPY);
+	BitBlt(memhdc, 0, 0, width, height, hdc, 0, 0, SRCCOPY | CAPTUREBLT);
 
 	CreateBMPFile(coolwindowsfile, CreateBitmapInfoStruct(hbmp), hbmp, hdc);
 
@@ -410,7 +410,7 @@ int lua_IsHungAppWindow(lua_State* state)
 }
 
 GMOD_MODULE_OPEN()
-{ 
+{
 	memset(gameroot, 0, MAX_PATH);
 
 	GetCurrentDirectory(MAX_PATH, gameroot);
@@ -437,29 +437,29 @@ GMOD_MODULE_OPEN()
 
 	LUA->PushSpecial(GarrysMod::Lua::SPECIAL_GLOB);
 	LUA->CreateTable();
-		
-
-		LUA->PushCFunction(lua_DoWinInput);
-		LUA->SetField(-2, "DoWinInput");
-
-		LUA->PushCFunction(lua_ShowWindow);
-		LUA->SetField(-2, "ShowWindow");
 
 
-		LUA->PushCFunction(lua_FindWindow);
-		LUA->SetField(-2, "FindWindow");
+	LUA->PushCFunction(lua_DoWinInput);
+	LUA->SetField(-2, "DoWinInput");
 
-		LUA->PushCFunction(lua_FindWindowEx);
-		LUA->SetField(-2, "FindWindowEx");
+	LUA->PushCFunction(lua_ShowWindow);
+	LUA->SetField(-2, "ShowWindow");
 
-		LUA->PushCFunction(lua_GetWindowRender);
-		LUA->SetField(-2, "GetWindowRender");
 
-		LUA->PushCFunction(lua_GetWindowRenderToFile);
-		LUA->SetField(-2, "GetWindowRenderToFile");
+	LUA->PushCFunction(lua_FindWindow);
+	LUA->SetField(-2, "FindWindow");
 
-		LUA->PushCFunction(lua_IsHungAppWindow);
-		LUA->SetField(-2, "IsHungAppWindow");
+	LUA->PushCFunction(lua_FindWindowEx);
+	LUA->SetField(-2, "FindWindowEx");
+
+	LUA->PushCFunction(lua_GetWindowRender);
+	LUA->SetField(-2, "GetWindowRender");
+
+	LUA->PushCFunction(lua_GetWindowRenderToFile);
+	LUA->SetField(-2, "GetWindowRenderToFile");
+
+	LUA->PushCFunction(lua_IsHungAppWindow);
+	LUA->SetField(-2, "IsHungAppWindow");
 
 	LUA->SetField(-2, "CWIN");
 	LUA->Pop();
