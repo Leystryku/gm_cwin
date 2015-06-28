@@ -423,7 +423,7 @@ GMOD_MODULE_OPEN()
 	LUA->CreateTable();
 #include "wmlist.h"
 	LUA->SetField(-2, "WM");
-	LUA->Pop(2);
+	LUA->Pop();
 
 	LUA->PushSpecial(GarrysMod::Lua::SPECIAL_GLOB);
 	//end give lua all WM_ stuff like WM_CHAR
@@ -433,7 +433,7 @@ GMOD_MODULE_OPEN()
 #include "swlist.h"
 
 	LUA->SetField(-2, "SW");
-	LUA->Pop(2);
+	LUA->Pop();
 
 	LUA->PushSpecial(GarrysMod::Lua::SPECIAL_GLOB);
 	LUA->CreateTable();
@@ -444,6 +444,7 @@ GMOD_MODULE_OPEN()
 
 		LUA->PushCFunction(lua_ShowWindow);
 		LUA->SetField(-2, "ShowWindow");
+
 
 		LUA->PushCFunction(lua_FindWindow);
 		LUA->SetField(-2, "FindWindow");
