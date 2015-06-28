@@ -10,4 +10,6 @@
 
 // Windows Header Files:
 #include <windows.h>
-#include <iostream>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string>

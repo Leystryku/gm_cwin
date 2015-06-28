@@ -6,3 +6,12 @@
 #define GMMODULE
 
 #include "Lua/Interface.h"
+#include "ismalltexture.h"
+#include "ismallpixelwriter.h"
+#include "smallvtf.h"
+
+struct Rect_t
+{
+	int x, y;
+	int width, height;
+};

@@ -8,3 +8,5 @@ project/obj/Release/vc120.pdb
 project/obj/Debug/coolwindows.log
 *.opensdf
 build/release/gm_cwin_win32.exp
+*.log
+project/coolwindows.vcxproj
