@@ -16,7 +16,7 @@ VBA.playing = false
 
 function VBA.SetupWindow()
 	-- argument number 1 is the classname, number 2 is the window name. You can only use the classname, or only the window name, or both
-	VBA.window = CWIN.FindWindow("wxWindowNR","") -- the VBA window ( your version may differ, if yes change the window name, case sensitive )
+	VBA.window = CWIN.FindWindow(""," VisualBoyAdvance-M (SVN1490)") -- the VBA window ( your version may differ, if yes change the window name, case sensitive )
 	if(not VBA.window) then
 		print("VBA window not found!") -- The window couldn't be found, which means it's either closed or you didn't use FindWindow properly.
 		return
