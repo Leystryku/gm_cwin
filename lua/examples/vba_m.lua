@@ -32,7 +32,9 @@ function VBA.SetupWindow()
 	VBA.width, VBA.height = CWIN.GetWindowSize(VBA.window) -- Get the width & height of the window
 
 	VBA.render = CWIN.GetWindowRender(VBA.window, VBA.width, VBA.height) -- Create a render texture ( width and height will be changed to a power of two aka 2^n )
-
+	
+	VBA.SetWindowStatus(false)
+	
 end
 
 
@@ -48,7 +50,7 @@ function VBA.SetWindowStatus( active )
 	local state = 0
 	
 	if(active) then
-		state = 1
+		state = 2
 	end
 	
 	CWIN.DoWinInput(VBA.window, WM.ACTIVATE, state)
