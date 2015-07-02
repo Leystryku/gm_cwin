@@ -13,6 +13,8 @@ end
 VBA = VBA or {} -- VBA table
 VBA.ManageFocus = true
 VBA.playing = false
+VBA.Width = 0
+VBA.Height = 0
 
 function VBA.SetupWindow()
 	-- argument number 1 is the classname, number 2 is the window name. You can only use the classname, or only the window name, or both
@@ -22,23 +24,22 @@ function VBA.SetupWindow()
 		return
 	end
 
-	VBA.gamewindow = VBA.window
-
 	VBA.lastactive = true
 	
 	VBA.SetWindowStatus(true) -- activate so that we can get the proper size
 
 	-- Render Setup
-	VBA.width, VBA.height = CWIN.GetWindowSize(VBA.gamewindow) -- Get the width & height of the window
+	VBA.width, VBA.height = CWIN.GetWindowSize(VBA.window) -- Get the width & height of the window
 
-	VBA.render = CWIN.GetWindowRender(VBA.gamewindow, VBA.width, VBA.height) -- Create a render texture ( width and height will be changed to a power of two aka 2^n )
-	
+	VBA.render = CWIN.GetWindowRender(VBA.window, VBA.width, VBA.height) -- Create a render texture ( width and height will be changed to a power of two aka 2^n )
+
 end
 
 
 
 function VBA.SetWindowStatus( active )
-
+	if(not VBA.window) then return end
+	
 	-- prevent activating active windows/inactivating inactive windows
 	if(active==VBA.lastactive) then return end 
 
@@ -64,13 +65,15 @@ VBA.MaxKeys = 255
 
 function VBA.SendKeyInput( key, press )
 	
+	if(not VBA.window) then return end
+	
 	local keystate = WM.KEYUP
 		
 	if(press) then
 		keystate = WM.KEYDOWN
 	end
 	
-	CWIN.DoWinInput(VBA.gamewindow, keystate, key)
+	CWIN.DoWinInput(VBA.window, keystate, key)
 end
 
 function VBA.CheckKeyInput( key )
@@ -114,7 +117,7 @@ VBA.FrameWait = 0
 local hadfocus = false
 
 function VBA.Tick( )
-	if (not VBA.window or vba_w < 0 or vba_h < 0 or vba_w>50000 or vba_h>50000) then
+	if (not VBA.window or VBA.Width < 0 or VBA.Height < 0 or VBA.Width>50000 or VBA.Height>50000) then
 		VBA.playing = false
 		VBA.SetupWindow()
 		return
@@ -156,12 +159,13 @@ hook.Add("Tick","VBA.Tick", VBA.Tick) -- The tick hook is called every frame
 
 
 function VBA.CheckSize( )
+	if(not VBA.window) then return end
 
-	local w, h = CWIN.GetWindowSize(VBA.gamewindow)
+	local w, h = CWIN.GetWindowSize(VBA.window)
 	
-	if(w!=vba_w or h != vba_h) then
-		vba_w, vba_h = w, h
-		VBA.render = CWIN.GetWindowRender(VBA.gamewindow, w, h)
+	if(w!=VBA.Width or h != VBA.Height) then
+		VBA.Width, VBA.Height = w, h
+		VBA.render = CWIN.GetWindowRender(VBA.window, w, h)
 		print("Updated window size, w: " .. w .. "h: " .. h)
 	end
 	
@@ -170,6 +174,7 @@ end
 timer.Create("VBA.CheckSize", 1, 0, VBA.CheckSize) -- Checks if the window size updated every second
 
 function VBA.Render( )
+	if(not VBA.window) then return end
 	if(not VBA.playing) then return end
 	
 	render.DrawTextureToScreenRect( VBA.render, 0, 0, VBA.width, VBA.height)
