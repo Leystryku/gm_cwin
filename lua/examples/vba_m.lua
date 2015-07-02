@@ -24,7 +24,7 @@ function VBA.SetupWindow()
 		return
 	end
 
-	VBA.lastactive = true
+	VBA.LastActive = false
 	
 	VBA.SetWindowStatus(true) -- activate so that we can get the proper size
 
@@ -41,18 +41,18 @@ function VBA.SetWindowStatus( active )
 	if(not VBA.window) then return end
 	
 	-- prevent activating active windows/inactivating inactive windows
-	if(active==VBA.lastactive) then return end 
+	if(active==VBA.LastActive) then return end 
 
 	-- 0 = not active, 1 = active by 'software', 2 = active by mouseclick
 	
 	local state = 0
 	
 	if(active) then
-		state = 2
+		state = 1
 	end
 	
 	CWIN.DoWinInput(VBA.window, WM.ACTIVATE, state)
-	
+	VBA.LastActive = active
 end
 
 
@@ -82,7 +82,6 @@ function VBA.CheckKeyInput( key )
 		if(not VBA.KeyCache[key]) then
 			VBA.SendKeyInput(key, true)
 			VBA.KeyCache[key] =true
-			print("pressed key")
 		end
 		
 		return
@@ -91,7 +90,6 @@ function VBA.CheckKeyInput( key )
 	if(VBA.KeyCache[key] and input.WasKeyReleased(key) ) then -- Key not pressed anymore
 		VBA.SendKeyInput(key, false)
 		VBA.KeyCache[key] = false
-		print("released key")
 	end
 
 end
@@ -126,14 +124,9 @@ function VBA.Tick( )
 	if (not VBA.playing) then return end
 	if (not system.HasFocus() or gui.IsConsoleVisible()) then
 		VBA.SetWindowStatus(false)
-
-		lostfocus = true
 		return
-	end
-	
-	if(lostfocus and VBA.ManageFocus) then
-		CWIN.DoWinInput(VBA.window, WM.ACTIVATE, 2)-- regained focus, tell window it is activated
-		lostfocus = false
+	else
+		VBA.SetWindowStatus(true)
 	end
 	
 	-- FPS Cap
@@ -201,11 +194,11 @@ concommand.Add("vba", function(p,c,a)
 	VBA.playing = not VBA.playing
 	
 	if(VBA.playing) then
-		CWIN.DoWinInput(VBA.window, WM.ACTIVATE, 2)
+		VBA.SetWindowStatus(true)
 		print("Enabled VBA")
 	else
 		
-		CWIN.DoWinInput(VBA.window, WM.ACTIVATE, 0)
+		VBA.SetWindowStatus(false)
 		print("Disabled VBA")
 	end
 
