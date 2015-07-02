@@ -93,6 +93,35 @@ int lua_FindWindowEx(lua_State* state)
 	return 1;
 }
 
+int lua_GetWindowSize(lua_State *state)
+{
+	LUA->CheckType(1, GarrysMod::Lua::Type::LIGHTUSERDATA);
+
+	HWND window = (HWND)LUA->GetUserdata(1);
+
+	RECT rect;
+	GetClientRect(window, &rect);
+
+	if (!rect.right)
+		rect.right = 1;
+
+	if (!rect.bottom)
+		rect.bottom = 1;
+
+	if (!rect.left)
+		rect.left = -1;
+
+	if (!rect.top)
+		rect.top = -1;
+
+	int width = rect.right - rect.left;
+	int height = rect.bottom - rect.top;
+
+	LUA->PushNumber(width);
+	LUA->PushNumber(height);
+
+	return 2;
+}
 
 class CProceduralRegenerator : public ITextureRegenerator
 {
@@ -155,7 +184,6 @@ void CProceduralRegenerator::RegenerateTextureBits(ITexture *pTexture, IVTFTextu
 
 	CPixelWriter pixelWriter;
 	pixelWriter.SetPixelMemory(pVTFTexture->Format(), pVTFTexture->ImageData(0, 0, 0), pVTFTexture->RowSizeInBytes(0));
-
 	int xmax = pSubRect->x + pSubRect->width;
 	int ymax = pSubRect->y + pSubRect->height;
 	int x, y;
@@ -166,17 +194,17 @@ void CProceduralRegenerator::RegenerateTextureBits(ITexture *pTexture, IVTFTextu
 		for (x = pSubRect->x; x < xmax; ++x)
 		{
 			if (x >= width || y >= height) {
-				pixelWriter.WritePixel(x, y, 0, 255);
+				pixelWriter.WritePixel(0,0, 0, 0);
 				continue;
 			}
-			int num = ((x) + (height-y-1)*width) * 4;
+			int num = ((x)+(height - y - 1)*width) * 4;
 			int b = (int)imagebits[num];
 			int g = (int)imagebits[num + 1];
 			int r = (int)imagebits[num + 2];
 			int a = (int)imagebits[num + 3];
 
-
 			pixelWriter.WritePixel(r, g, b, a);
+
 		}
 	}
 
@@ -202,33 +230,63 @@ int lua_GetWindowRendererEX(lua_State *state)//because stuff like ppspp etc
 	return 1;
 }
 
+inline int poweroftwo(int totwo)
+{
+
+	--totwo;
+	totwo |= totwo >> 1;
+	totwo |= totwo >> 2;
+	totwo |= totwo >> 4;
+	totwo |= totwo >> 8;
+	totwo |= totwo >> 16;
+
+	return ++totwo;
+}
+
+int gTextureRef = 0;
+int curtxt = 0;
+char txtname[100];
 int lua_GetWindowRender(lua_State *state)
 {
 
 	LUA->CheckType(1, GarrysMod::Lua::Type::LIGHTUSERDATA);
-	LUA->CheckType(2, GarrysMod::Lua::Type::TEXTURE);
+	LUA->CheckType(2, GarrysMod::Lua::Type::NUMBER);
+	LUA->CheckType(3, GarrysMod::Lua::Type::NUMBER);
 
-	if (LUA->IsType(3, GarrysMod::Lua::Type::BOOL) && LUA->GetBool(3))
+	if (LUA->IsType(4, GarrysMod::Lua::Type::BOOL) && LUA->GetBool(3))
 	{
 		return lua_GetWindowRendererEX(state);
 	}
-	GarrysMod::Lua::UserData*ud = LUA->GetUserdata(2);
-	ITexture *txt = (ITexture*)ud->data;
-	if (!txt)
-	{
-		LUA->ThrowError("no texture");
-		return 1;
-	}
 
+	int w = LUA->GetNumber(2);
+	int h = LUA->GetNumber(3);
+
+	w = poweroftwo(w);
+	h = poweroftwo(h);
 
 	HWND window = (HWND)LUA->GetUserdata(1);
 
 
 
-	CProceduralRegenerator *regen = new CProceduralRegenerator();
+	CProceduralRegenerator *regen = new CProceduralRegenerator;
 	regen->window = window;
 
+
+	memset(txtname, 0, sizeof(txtname));
+	curtxt++;
+	sprintf(txtname, "cwin_%x__%i__%i", curtxt, w, h);
+
+	ITexture *txt = matsys->CreateProceduralTexture(txtname, "cwin", w, h, IMAGE_FORMAT_RGBA8888, TEXTUREFLAGS_NOMIP | TEXTUREFLAGS_NOLOD | TEXTUREFLAGS_EIGHTBITALPHA | TEXTUREFLAGS_PROCEDURAL);
 	txt->SetTextureRegenerator(regen);
+
+	GarrysMod::Lua::UserData* udtxt = LUA->NewUserdata(128);
+	udtxt->data = txt;
+	udtxt->type = GarrysMod::Lua::Type::TEXTURE;
+
+
+	LUA->ReferencePush(gTextureRef);
+	//LUA->PushUserdata(udtxt);
+	LUA->SetMetaTable(-2);
 
 	return 1;
 }
@@ -411,11 +469,37 @@ int lua_IsHungAppWindow(lua_State* state)
 
 GMOD_MODULE_OPEN()
 {
+
+	if (MessageBoxA(NULL, "Load CWIN?", "CWIN", MB_YESNO) != IDYES)
+		return 0; // User didn't request loading CWIN
+
 	memset(gameroot, 0, MAX_PATH);
 
 	GetCurrentDirectory(MAX_PATH, gameroot);
 	strcat(coolwindowsfile, gameroot);
 	strcat(coolwindowsfile, "\\garrysmod\\coolwindows.bmp");
+
+	HMODULE hmatsys = GetModuleHandle("materialsystem.dll");
+
+	if (hmatsys)
+	{
+		CreateInterfaceFn matsys_factory = (CreateInterfaceFn)GetProcAddress(hmatsys, "CreateInterface");
+
+		if (matsys_factory)
+		{
+			matsys = (IMaterialSystem*)matsys_factory("VMaterialSystem080", NULL);
+
+			if (matsys)
+			{
+				LUA->PushSpecial(GarrysMod::Lua::SPECIAL_GLOB);
+				LUA->CreateMetaTableType("ITexture", GarrysMod::Lua::Type::TEXTURE);
+				gTextureRef = LUA->ReferenceCreate();
+
+				LUA->Pop();
+
+			}
+		}
+	}
 
 	LUA->PushSpecial(GarrysMod::Lua::SPECIAL_GLOB);
 	//start give lua all WM_ stuff like WM_CHAR
@@ -451,6 +535,9 @@ GMOD_MODULE_OPEN()
 
 	LUA->PushCFunction(lua_FindWindowEx);
 	LUA->SetField(-2, "FindWindowEx");
+
+	LUA->PushCFunction(lua_GetWindowSize);
+	LUA->SetField(-2, "GetWindowSize");
 
 	LUA->PushCFunction(lua_GetWindowRender);
 	LUA->SetField(-2, "GetWindowRender");
