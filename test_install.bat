@@ -1,0 +1,1 @@
+copy "build\debug\gm_cwin_win32.dll" "C:\Program Files (x86)\Steam\steamapps\common\GarrysMod\garrysmod\lua\bin\gmcl_cwin_win32.dll"

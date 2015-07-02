@@ -165,18 +165,18 @@ void CProceduralRegenerator::RegenerateTextureBits(ITexture *pTexture, IVTFTextu
 		pixelWriter.Seek(pSubRect->x, y);
 		for (x = pSubRect->x; x < xmax; ++x)
 		{
-
-			int num = (x + y) * 4;
-			int r = (int)imagebits[num];
+			if (x >= width || y >= height) {
+				pixelWriter.WritePixel(x, y, 0, 255);
+				continue;
+			}
+			int num = ((x) + (height-y-1)*width) * 4;
+			int b = (int)imagebits[num];
 			int g = (int)imagebits[num + 1];
-			int b = (int)imagebits[num + 2];
+			int r = (int)imagebits[num + 2];
 			int a = (int)imagebits[num + 3];
 
-			if (x == 5 && y == 5)
-				pixelWriter.WritePixel(255, 0, 0, 255);
-			else
-				pixelWriter.WritePixel(r, g, b, a);
 
+			pixelWriter.WritePixel(r, g, b, a);
 		}
 	}
 
