@@ -1,5 +1,5 @@
 # coolwindows
-A module which allows interfering with windows in gmod.
+A module which allows manipulating windows using gmod
 CWIN.FindWindow/FindWindowEx are there for finding the windows to send input to.
 CWIN.DoWinInput sends the window specified a message.
 CWIN.GetWindowRender allows taking screenshots of windows and pushing them to gmod so that you can e.g. use them in a HUDPaint hoo
